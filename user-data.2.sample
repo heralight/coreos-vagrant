@@ -50,13 +50,63 @@ coreos:
         [Service]
         ExecStartPre=/usr/bin/etcdctl set /coreos.com/network/config '{ "Network": "10.1.0.0/16" }'
     command: start
-  - name: docker.service
-    drop-ins:
-    - name: 20-http-proxy.conf
-      content: |
-        [Service]
-        Environment="HTTP_PROXY=http://yourproxy:port" "HTTPS_PROXY=http://yourproxy:port" "http-proxy=http://yourproxy:port" "https-proxy=http://yourproxy:port"    "NO_PROXY=localhost,127.0.0.0/8,172.17.0.0/16,.sock,yourproxy,/var/run/docker.sock"
-    command: restart
+#  - name: docker.service
+#    drop-ins:
+#    - name: 20-http-proxy.conf
+#      content: |
+#        [Service]
+#        Environment="HTTP_PROXY=http://yourproxy:port" "HTTPS_PROXY=http://yourproxy:port" "http-proxy=http://yourproxy:port" "https-proxy=http://yourproxy:port"    "NO_PROXY=localhost,127.0.0.0/8,172.17.0.0/16,.sock,yourproxy,/var/run/docker.sock"
+#    command: restart
+  - name: docker-swarm-instance.service
+    runtime: true
+    enable: true
+    command: start
+    content: |
+      Description=Docker Swarm instance
+      After=etcd.service docker.service
+      Requires=docker.service etcd.service
+
+      [Service]
+      Type=notify
+      NotifyAccess=all
+      TimeoutStartSec=120
+      TimeoutStopSec=15
+      EnvironmentFile=/etc/environment
+      TimeoutStartSec=0
+      SyslogIdentifier=writer_process
+      ExecStart=/opt/bin/systemd-docker --env run --name %n --rm swarm join \
+        --addr=${COREOS_PRIVATE_IPV4}:2375 etcd://${COREOS_PRIVATE_IPV4}:2379/swarm
+      Restart=always
+      RestartSec=10s
+      LimitNOFILE=40000
+      TimeoutStartSec=0
+
+      [Install]
+      WantedBy=multi-user.target
+  - name: docker-swarm-manager.service
+
+    content: |
+      Description=Docker Swarm Manager
+      After=docker-swarm-instance.service
+      Requires=docker-swarm-instance.service docker.service etcd.service
+
+      [Service]
+      Type=notify
+      NotifyAccess=all
+      TimeoutStartSec=120
+      TimeoutStopSec=15
+      EnvironmentFile=/etc/environment
+      TimeoutStartSec=0
+      SyslogIdentifier=writer_process
+      ExecStart=/opt/bin/systemd-docker --env run  --name %n --rm  \
+        -p 32375:2375 swarm manage etcd://${COREOS_PRIVATE_IPV4}:2379/swarm
+      Restart=always
+      RestartSec=10s
+      LimitNOFILE=40000
+      TimeoutStartSec=0
+
+      [Install]
+      WantedBy=multi-user.target
   - name: fleet.service
     command: start
   - name: update-engine.service

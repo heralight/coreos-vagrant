@@ -62,6 +62,9 @@ if File.exist?(UTILSFILE)
   include Utils
 end
 
+require File.join(File.dirname(__FILE__), "modules/provision-docker-swarm.rb")
+include DockerSwarm
+
 
 
 # Use old vb_xxx config variables when set
@@ -189,6 +192,8 @@ Vagrant.configure("2") do |config|
         config.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
       end
       
+      
+      # apply user-data
       if (reapplyUserData)
         puts "Reapply user-data asked..."
         if File.exist?(CLOUD_CONFIG_PATH)
@@ -199,6 +204,20 @@ Vagrant.configure("2") do |config|
       end
       
       Utils.set_share(config, ip)
+
+      # install systemd-docker 
+      if ($vagrant_module_docker_compose)
+        config.vm.provision :shell, run: "once", :path => "./modules/provision-docker-compose.sh"
+      end
+
+      # install docker compose (https://github.com/ibuildthecloud/systemd-docker)
+      config.vm.provision :shell, run: "once", :path => "./modules/provision-systemd-docker.sh"
+      
+      if ($vagrant_module_docker_swarm)
+        DockerSwarm.init(config, i, ip)
+      end
+      # launch some command at boot time
+      config.vm.provision :shell, :path => "./modules/startup.sh", run: "always", privileged: false
 
     end
   end

@@ -57,19 +57,19 @@ module Utils
         
         command_user = "net user #{smb_username} || ( net user #{smb_username} #{smb_password} /add && WMIC USERACCOUNT WHERE \"Name='vagrant'\" SET PasswordExpires=FALSE )"
         @ui.info "Adding vagrant user"
-        puts command_user
+        #puts command_user
         windows_elevated_shell command_user
 
         # Add the SMB share if it does not exist.
         command_share = "net share #{share_name} || net share #{share_name}=#{path} /grant:#{smb_username},FULL"
         @ui.info "Adding vagrant SMB share"
-        puts command_share
+        #puts command_share
         windows_elevated_shell command_share
 
         # Set folder permissions.
         command_permissions = "icacls #{path} /grant #{smb_username}:(OI)(CI)M"
         @ui.info "Setting folder permissions"
-        puts command_permissions
+        #puts command_permissions
         windows_elevated_shell command_permissions
       end
 

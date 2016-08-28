@@ -7,6 +7,16 @@ $new_discovery_url="https://discovery.etcd.io/new?size=#{$num_instances}"
 
 # Automatically replace the discovery token on 'vagrant up'
 
+
+# Vagrant proxy section
+$vagrant_proxy_enable=false
+$vagrant_proxy_http=ENV["http_proxy"]
+$vagrant_proxy_https=ENV["https_proxy"]
+$vagrant_proxy_provider={ docker: true }  
+$vagrant_proxy_no_proxy=ENV["no_proxy"]
+# End Vagrant proxy section
+$vagrant_module_docker_compose=true
+$vagrant_module_docker_swarm=true
 if File.exists?('user-data') && ARGV[0].eql?('up')
   require 'open-uri'
   require 'yaml'
@@ -24,6 +34,16 @@ if File.exists?('user-data') && ARGV[0].eql?('up')
     data['coreos']['etcd2']['discovery'] = token
   end
 
+  dockerSwarm = data['coreos']['units'].find {|a| a['name'] == "docker-swarm.service"}
+  if (dockerSwarm)
+    dockerSwarm['enable'] = $vagrant_module_docker_swarm
+    puts "docker Swarm is " + ( $vagrant_module_docker_swarm? "true" : "false")
+  end
+  #dockerSwarmManager = data['coreos']['units']..find {|a| a['name'] == "docker-swarm-manager.service"}
+  #if (dockerSwarmManager )
+   # dockerSwarmManager['enable'] = $vagrant_module_docker_swarm
+  #end  
+
   # Fix for YAML.load() converting reboot-strategy from 'off' to `false`
   if data.key? 'coreos' and data['coreos'].key? 'update' and data['coreos']['update'].key? 'reboot-strategy'
     if data['coreos']['update']['reboot-strategy'] == false
@@ -35,13 +55,6 @@ if File.exists?('user-data') && ARGV[0].eql?('up')
   File.open('user-data', 'w') { |file| file.write("#cloud-config\n\n#{yaml}") }
 end
 
-# Vagrant proxy section
-$vagrant_proxy_enable=false
-$vagrant_proxy_http=ENV["http_proxy"]
-$vagrant_proxy_https=ENV["https_proxy"]
-$vagrant_proxy_provider={ docker: true }  
-$vagrant_proxy_no_proxy=ENV["no_proxy"]
-# End Vagrant proxy section
 
 
 #

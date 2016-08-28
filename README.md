@@ -111,6 +111,24 @@ See `config.rb.sample` for more information.
 Launching a CoreOS cluster on Vagrant is as simple as configuring `$num_instances` in a `config.rb` file to 3 (or more!) and running `vagrant up`.
 Make sure you provide a fresh discovery URL in your `user-data` if you wish to bootstrap etcd in your cluster.
 
+### Proxy
+
+You set proxy information in config.rb with vagrant_proxy_* variable
+
+### Docker Docker Swarm / Manager
+
+You can enable Docker Swarm by setting to true
+
+```
+$vagrant_module_docker_compose=true
+$vagrant_module_docker_swarm=true
+```
+
+### Systemd-docker
+
+a provision script is call to install  [systemd-docker](https://github.com/ibuildthecloud/systemd-docker/commit/9b02cf96ec874bae449231901631b0a4b3d546c0).
+
+
 ## New Box Versions
 
 CoreOS is a rolling release distribution and versions that are out of date will automatically update.
@@ -136,3 +154,11 @@ Follow the [Enable Remote API instructions][coreos-enabling-port-forwarding] to 
 Then you can then use the `docker` command from your local shell by setting `DOCKER_HOST`:
 
     export DOCKER_HOST=tcp://localhost:2375
+
+## More information on this fork
+
+[Docker sur CoreOS par Vagrant](http://www.hera.cc/2016/06/docker-sur-coreos-par-vagrant/)
+[Déployer Docker Compose et Swarm sur coreOS](http://www.hera.cc/2016/06/deployer-docker-compose-et-swarm-sur-coreos/)
+[Truc et astuces sur Systemd et CoreOs]( http://www.hera.cc/2016/06/trucs-et-astuces-pour-systemd/)
+
+
